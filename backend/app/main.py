@@ -1,15 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import tasks, system
+from pydantic import BaseModel
 
-# Initialize FastAPI App
 app = FastAPI(
-    title="FastAPI Learning Backend",
-    description="A high-performance Python backend for the Next.js learning project",
+    title="My Experimental Backend",
+    description="A clean slate FastAPI setup",
     version="1.0.0"
 )
 
-# Set up CORS middleware to allow requests from the Next.js frontend (running on port 3000)
+# CORS config
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
@@ -18,24 +17,34 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include Routers
-app.include_router(tasks.router, prefix="/api/tasks", tags=["Tasks"])
-app.include_router(system.router, prefix="/api/system", tags=["System"])
-
+# ---------------------------------------------------------
+# Example 1: Basic GET Endpoint
+# ---------------------------------------------------------
 @app.get("/")
 def read_root():
-    return {
-        "status": "online",
-        "message": "Welcome to the FastAPI Python Backend!",
-        "version": "1.0.0",
-        "endpoints": [
-            {"path": "/api/tasks", "methods": ["GET", "POST"]},
-            {"path": "/api/tasks/{id}", "methods": ["PUT", "DELETE"]},
-            {"path": "/api/system", "methods": ["GET"]},
-            {"path": "/api/hello", "methods": ["GET"]}
-        ]
-    }
+    return {"status": "online", "message": "Your clean slate FastAPI server is running!"}
 
 @app.get("/api/hello")
 def hello_world():
     return {"message": "Hello World from Python BE!"}
+
+# ---------------------------------------------------------
+# Example 2: Path Parameters
+# ---------------------------------------------------------
+@app.get("/api/users/{user_id}")
+def get_user(user_id: int):
+    # This endpoint extracts 'user_id' from the URL
+    return {"user_id": user_id, "name": f"User {user_id}", "role": "admin"}
+
+# ---------------------------------------------------------
+# Example 3: POST Request with JSON Body
+# ---------------------------------------------------------
+class Item(BaseModel):
+    name: str
+    description: str | None = None
+    price: float
+
+@app.post("/api/items")
+def create_item(item: Item):
+    # This endpoint receives JSON data conforming to the Item model
+    return {"message": "Item created successfully", "item": item}
