@@ -1,10 +1,40 @@
 # FastAPI Backend
 
-This is the FastAPI backend service for the project.
+This is the FastAPI backend service for the project, restructured using a clean, scalable architectural pattern (separating models, routes, database state, and utilities).
+
+## Project Structure
+
+The project has been refactored into modular directories:
+
+```text
+backend/
+├── app/
+│   ├── main.py             # Main entry point (CORS, Middlewares, Router inclusion)
+│   ├── database.py         # Mock in-memory database state
+│   ├── models/             # Pydantic data schemas
+│   │   ├── __init__.py
+│   │   ├── item.py
+│   │   └── todo.py
+│   ├── routes/             # API route controllers grouped logically
+│   │   ├── __init__.py
+│   │   ├── health.py
+│   │   ├── item.py
+│   │   ├── todo.py
+│   │   └── user.py
+│   └── utils/              # Helper utilities and exception handlers
+│       ├── __init__.py
+│       └── exceptions.py
+├── requirements.txt        # Backend dependencies
+└── readme.md               # This file
+```
+
+---
 
 ## Prerequisites
 
-Make sure you have Python installed and the virtual environment is set up.
+Make sure you have Python installed and your virtual environment is set up.
+
+---
 
 ## How to Run
 
@@ -46,7 +76,9 @@ uvicorn app.main:app --reload --app-dir backend
 
 The server will start locally on [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
+---
+
 ## API Documentation
 Once the server is running, you can explore and test the API endpoints interactively:
-- Swagger UI docs: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-- ReDoc docs: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
+- **Swagger UI docs**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- **ReDoc docs**: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
