@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.models.todo import Todo, TodoUpdate, TodoResponse
-from app.models.db_todo import DBTodo
+from sqlalchemy import or_ 
+from app.schemas.todo import Todo, TodoUpdate, TodoResponse
+from app.models.todo import DBTodo
 from app.database import get_db
 from typing import List
 
@@ -30,6 +31,28 @@ def get_all_todos(db: Session = Depends(get_db)):
     """
     todos = db.query(DBTodo).order_by(DBTodo.id.asc()).all()
     return {"message": "All todos fetched successfully", "todos": todos}
+
+
+@router.get("/api/gettodo")
+def get_completed_incompleted_todos(completed: bool | None = None, db: Session = Depends(get_db)):
+    if completed is None:
+        todos = db.query(DBTodo).order_by(DBTodo.id.asc()).all()
+    else:
+        todos = db.query(DBTodo).filter(DBTodo.completed == completed).order_by(DBTodo.id.asc()).all()
+    return {"message": f"Completed filter: {completed}", "todos": todos}
+
+
+
+@router.get("/api/gettodo/search")
+def get_completed_incompleted_todos(search:str = "", db: Session = Depends(get_db)):
+    """
+    Endpoint to search todos by title or description.
+    Matches if either field contains the search string.
+    """
+    todos = db.query(DBTodo).filter(or_(DBTodo.description.ilike(f"%{search}%"),DBTodo.title.ilike(f"%{search}%"))).order_by(DBTodo.id.asc()).all()
+    return {"message": f"Searched String: {search}", "todos": todos}
+
+
 
 @router.get("/api/gettodos/{todo_id}", response_model=TodoResponse)
 def get_todo(todo_id: int, db: Session = Depends(get_db)):

@@ -4,12 +4,13 @@ from fastapi.exceptions import RequestValidationError
 from app.utils.exceptions import custom_validation_exception_handler
 
 from app.database import Base, engine
-from app.models import db_todo # Registers the model with SQLAlchemy metadata
+from app.models import todo as model_todo, user as model_user # Registers the models with SQLAlchemy metadata
 
 # Automatically create tables in the database if they do not exist
 Base.metadata.create_all(bind=engine)
 
-from app.routes import health, item, todo
+
+from app.routes import health, todo, users
 
 app = FastAPI(
     title="My Experimental Backend",
@@ -29,6 +30,7 @@ app.add_middleware(
 app.exception_handler(RequestValidationError)(custom_validation_exception_handler)
 
 app.include_router(health.router)
-app.include_router(item.router)
 app.include_router(todo.router)
+app.include_router(users.router)
+
 

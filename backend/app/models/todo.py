@@ -1,17 +1,13 @@
-from pydantic import BaseModel, ConfigDict
-from typing import Optional
+from sqlalchemy import Column, Integer, String, Boolean
+from app.database import Base
 
-class Todo(BaseModel):
-    title: str
-    description: Optional[str] = None
-    completed: bool = False
+class DBTodo(Base):
+    """
+    SQLAlchemy model representing the 'todos' table in the PostgreSQL database.
+    """
+    __tablename__ = "todos"
 
-    model_config = ConfigDict(from_attributes=True)
-
-class TodoUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    completed: Optional[bool] = None
-
-class TodoResponse(Todo):
-    id: int
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False, index=True)
+    description = Column(String, nullable=True)
+    completed = Column(Boolean, default=False)
