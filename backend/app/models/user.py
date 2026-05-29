@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import relationship
 from app.database import Base
 
 class DBUser(Base):
@@ -11,3 +12,7 @@ class DBUser(Base):
     username = Column(String, unique=True, nullable=False, index=True)
     hashed_password = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False, index=True)
+
+    # One-to-many relationship linking a user to their multiple todos
+    todos = relationship("DBTodo", back_populates="owner", cascade="all, delete-orphan")
+

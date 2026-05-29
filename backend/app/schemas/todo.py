@@ -15,3 +15,5 @@ class TodoUpdate(BaseModel):
 
 class TodoResponse(Todo):
     id: int
+    owner_id: int
+

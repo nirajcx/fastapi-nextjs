@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -58,7 +58,7 @@ def get_users(db: Session = Depends(get_db)):
     return users
 
 @router.post("/login")
-def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
+def login(user_credentials: UserLogin, response: Response, db: Session = Depends(get_db)):
     db_user = db.query(DBUser).filter(DBUser.username == user_credentials.username).first()
     
     if not db_user:
@@ -67,5 +67,15 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     if not is_correct:
         raise HTTPException(status_code=400, detail="Invalid Credentials")
         
-    return {"message": "Login successful!","user":UserResponse.model_validate(db_user)}
+    # Set the cookie with user's ID manually (httponly prevents Javascript access, which is secure!)
+    response.set_cookie(key="session_user", value=str(db_user.id), httponly=True, samesite="lax")
+    
+    return {"message": "Login successful!", "user": UserResponse.model_validate(db_user)}
+
+@router.post("/logout")
+def logout(response: Response):
+    # Deletes the cookie to log the user out
+    response.delete_cookie(key="session_user")
+    return {"message": "Logout successful!"}
+
     

@@ -6,60 +6,64 @@ from app.models.todo import DBTodo
 from app.database import get_db
 from typing import List
 
+from app.models.user import DBUser
+from app.utils.auth import get_current_user
+
 router = APIRouter()
 
 @router.post("/api/addtodo", response_model=TodoResponse, status_code=status.HTTP_201_CREATED)
-def add_todo(todo_item: Todo, db: Session = Depends(get_db)):
+def add_todo(todo_item: Todo, current_user: DBUser = Depends(get_current_user), db: Session = Depends(get_db)):
     """
     Endpoint to add a new todo.
-    Injects the DB session dependency using 'Depends(get_db)'.
+    Owner is automatically assigned using the session cookie.
     """
     new_todo = DBTodo(
         title=todo_item.title,
         description=todo_item.description,
-        completed=todo_item.completed
+        completed=todo_item.completed,
+        owner_id=current_user.id
     )
     db.add(new_todo)
     db.commit()
-    db.refresh(new_todo) # Reload attributes from the database (like id)
+    db.refresh(new_todo)
     return new_todo
 
 @router.get("/api/gettodos")
-def get_all_todos(db: Session = Depends(get_db)):
+def get_all_todos(current_user: DBUser = Depends(get_current_user), db: Session = Depends(get_db)):
     """
-    Endpoint to fetch all todos.
+    Endpoint to fetch all todos for the logged-in user.
     """
-    todos = db.query(DBTodo).order_by(DBTodo.id.asc()).all()
+    todos = db.query(DBTodo).filter(DBTodo.owner_id == current_user.id).order_by(DBTodo.id.asc()).all()
     return {"message": "All todos fetched successfully", "todos": todos}
 
-
 @router.get("/api/gettodo")
-def get_completed_incompleted_todos(completed: bool | None = None, db: Session = Depends(get_db)):
-    if completed is None:
-        todos = db.query(DBTodo).order_by(DBTodo.id.asc()).all()
-    else:
-        todos = db.query(DBTodo).filter(DBTodo.completed == completed).order_by(DBTodo.id.asc()).all()
+def get_completed_incompleted_todos(completed: bool | None = None, current_user: DBUser = Depends(get_current_user), db: Session = Depends(get_db)):
+    """
+    Endpoint to fetch completed/incomplete todos for the logged-in user.
+    """
+    query = db.query(DBTodo).filter(DBTodo.owner_id == current_user.id)
+    if completed is not None:
+        query = query.filter(DBTodo.completed == completed)
+    todos = query.order_by(DBTodo.id.asc()).all()
     return {"message": f"Completed filter: {completed}", "todos": todos}
 
-
-
 @router.get("/api/gettodo/search")
-def get_completed_incompleted_todos(search:str = "", db: Session = Depends(get_db)):
+def search_todos(search: str = "", current_user: DBUser = Depends(get_current_user), db: Session = Depends(get_db)):
     """
-    Endpoint to search todos by title or description.
-    Matches if either field contains the search string.
+    Endpoint to search todos for the logged-in user.
     """
-    todos = db.query(DBTodo).filter(or_(DBTodo.description.ilike(f"%{search}%"),DBTodo.title.ilike(f"%{search}%"))).order_by(DBTodo.id.asc()).all()
-    return {"message": f"Searched String: {search}", "todos": todos}
-
-
+    todos = db.query(DBTodo).filter(
+        DBTodo.owner_id == current_user.id,
+        or_(DBTodo.description.ilike(f"%{search}%"), DBTodo.title.ilike(f"%{search}%"))
+    ).order_by(DBTodo.id.asc()).all()
+    return {"message": f"Searched String: '{search}'", "todos": todos}
 
 @router.get("/api/gettodos/{todo_id}", response_model=TodoResponse)
-def get_todo(todo_id: int, db: Session = Depends(get_db)):
+def get_todo(todo_id: int, current_user: DBUser = Depends(get_current_user), db: Session = Depends(get_db)):
     """
-    Endpoint to fetch a single todo by its ID.
+    Endpoint to fetch a single todo belonging to the logged-in user.
     """
-    todo = db.query(DBTodo).filter(DBTodo.id == todo_id).first()
+    todo = db.query(DBTodo).filter(DBTodo.id == todo_id, DBTodo.owner_id == current_user.id).first()
     if not todo:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
@@ -68,11 +72,11 @@ def get_todo(todo_id: int, db: Session = Depends(get_db)):
     return todo
 
 @router.delete("/api/deletetodo/{todo_id}")
-def delete_todo(todo_id: int, db: Session = Depends(get_db)):
+def delete_todo(todo_id: int, current_user: DBUser = Depends(get_current_user), db: Session = Depends(get_db)):
     """
-    Endpoint to delete a todo.
+    Endpoint to delete a todo belonging to the logged-in user.
     """
-    todo = db.query(DBTodo).filter(DBTodo.id == todo_id).first()
+    todo = db.query(DBTodo).filter(DBTodo.id == todo_id, DBTodo.owner_id == current_user.id).first()
     if not todo:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
@@ -83,11 +87,11 @@ def delete_todo(todo_id: int, db: Session = Depends(get_db)):
     return {"message": f"Todo with id {todo_id} deleted successfully"}
 
 @router.patch("/api/edittodo/{todo_id}", response_model=TodoResponse)
-def edit_todo(todo_id: int, todo_item: TodoUpdate, db: Session = Depends(get_db)):
+def edit_todo(todo_id: int, todo_item: TodoUpdate, current_user: DBUser = Depends(get_current_user), db: Session = Depends(get_db)):
     """
-    Endpoint to partially update a todo.
+    Endpoint to partially update a todo belonging to the logged-in user.
     """
-    todo = db.query(DBTodo).filter(DBTodo.id == todo_id).first()
+    todo = db.query(DBTodo).filter(DBTodo.id == todo_id, DBTodo.owner_id == current_user.id).first()
     if not todo:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
@@ -105,3 +109,5 @@ def edit_todo(todo_id: int, todo_item: TodoUpdate, db: Session = Depends(get_db)
     db.commit()
     db.refresh(todo)
     return todo
+
+
