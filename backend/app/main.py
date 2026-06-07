@@ -4,7 +4,6 @@ from fastapi.exceptions import RequestValidationError
 from app.utils.exceptions import custom_validation_exception_handler
 
 from app.database import Base, engine
-from app.models import todo as model_todo, user as model_user # Registers the models with SQLAlchemy metadata
 
 # Automatically create tables in the database if they do not exist
 Base.metadata.create_all(bind=engine)
