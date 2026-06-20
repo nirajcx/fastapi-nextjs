@@ -4,7 +4,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true, // Crucial for session cookies
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },

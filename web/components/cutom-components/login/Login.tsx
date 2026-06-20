@@ -15,7 +15,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 const Login = () => {
-  // Login State
   const [loginError, setLoginError] = useState<string | null>(null);
   const [loginSuccess, setLoginSuccess] = useState<string | null>(null);
   const router = useRouter();
@@ -39,7 +38,7 @@ const Login = () => {
         localStorage.setItem("user", JSON.stringify(response.data.user));
       }
       setTimeout(() => {
-        router.push("/dashboard");
+        router.push("/todos");
       }, 1000);
     } catch (error: any) {
       if (error.response && error.response.data && error.response.data.detail) {
