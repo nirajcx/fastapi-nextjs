@@ -5,6 +5,7 @@ from app.database import get_db
 from app.models.user import DBUser
 from app.schemas.user import UserCreate, UserResponse, UserLogin
 from app.utils.utils import hash_password, verify_password
+from app.utils.auth import create_access_token
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 
@@ -53,10 +54,12 @@ def login(user_credentials: UserLogin, response: Response, db: Session = Depends
     if not is_correct:
         raise HTTPException(status_code=400, detail="Invalid Credentials")
         
-    response.set_cookie(key="session_user", value=str(db_user.id), httponly=True, samesite="lax")
+    access_token = create_access_token(data={"sub": str(db_user.id)})
+    response.set_cookie(key="access_token", value=access_token, httponly=True, samesite="lax")
+    
     return {"message": "Login successful!", "user": UserResponse.model_validate(db_user)}
 
 @router.post("/logout")
 def logout(response: Response):
-    response.delete_cookie(key="session_user")
+    response.delete_cookie(key="access_token")
     return {"message": "Logout successful!"}
